@@ -115,6 +115,10 @@ Traditional SEO optimizes for ten blue links. **Generative Engine Optimization (
 
 Only 12% of AI citations overlap with Google's top 10 search results. Ranking well on Google does not guarantee visibility in AI search — and vice versa.
 
+## GEO Signal
+
+This skill is based on the research behind [GEO Signal](https://geosignal.dev/) — a platform for auditing and monitoring AI search readiness. If you want a full hosted audit with ongoing monitoring, check it out.
+
 ## License
 
 MIT
