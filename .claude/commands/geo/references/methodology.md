@@ -8,6 +8,33 @@ Key research finding: Only 12% of AI citations overlap with Google's top 10 sear
 
 ---
 
+## Local Project Mode: Framework-Specific Guidance
+
+When auditing source files on disk, adapt checks to the framework:
+
+### Where to find things by framework
+
+| Framework | Pages/routes | Layout/head | Public assets | Meta config |
+|-----------|-------------|-------------|---------------|-------------|
+| **Next.js (App Router)** | `app/**/page.{tsx,jsx}` | `app/layout.tsx`, `app/**/layout.tsx` | `public/` | `metadata` export in layout/page, or `generateMetadata()` |
+| **Next.js (Pages Router)** | `pages/**/*.{tsx,jsx}` | `pages/_app.tsx`, `pages/_document.tsx` | `public/` | `next-seo`, `<Head>` component |
+| **Nuxt** | `pages/**/*.vue` | `app.vue`, `layouts/` | `public/` | `useHead()`, `useSeoMeta()`, `nuxt.config.ts` |
+| **SvelteKit** | `src/routes/**/+page.svelte` | `src/routes/+layout.svelte`, `src/app.html` | `static/` | `<svelte:head>` |
+| **Astro** | `src/pages/**/*.astro` | `src/layouts/` | `public/` | `<head>` in layouts, Astro frontmatter |
+| **Vite/React SPA** | `src/**/*.{tsx,jsx}` | `index.html`, `src/App.tsx` | `public/` | `react-helmet`, `index.html` |
+| **Hugo** | `content/**/*.md` | `layouts/`, `themes/` | `static/` | Front matter, `config.toml` |
+| **Jekyll** | `_posts/`, `*.md` | `_layouts/`, `_includes/` | root | Front matter, `_config.yml` |
+| **Plain HTML** | `*.html` | root `index.html` | root | `<head>` section |
+
+### Structured data in frameworks
+
+- **Next.js**: Look for `metadata` export with `other` field containing JSON-LD, or `<script type="application/ld+json">` in layout components, or `next-seo` package usage
+- **Nuxt**: Check `useSchemaOrg()` composable, `nuxt-schema-org` module, or inline `<script type="application/ld+json">`
+- **Astro**: Check `<script type="application/ld+json">` in layout `<head>`, or `astro-seo` package
+- **All frameworks**: Always grep for `application/ld+json` as a fallback
+
+---
+
 ## Dimension 1: Content Structure (25% weight)
 
 ### What to check
@@ -102,17 +129,52 @@ Parse for User-agent rules targeting these crawlers:
 - If present, evaluate structure: does it contain title, description, and links to key content?
 - The llms.txt spec (Jeremy Howard, 2024) proposes a curated summary of a site's most important content for AI consumption
 
-#### Markdown content negotiation
+#### Markdown for agents
 
-- Send request with `Accept: text/markdown` header
-- If response returns `content-type: text/markdown`, the site supports markdown for agents
-- Check for `x-markdown-tokens` header (token count estimate)
-- This is supported by Cloudflare (Pro+ plans), Vercel, and Laravel
+AI systems increasingly prefer consuming markdown over HTML. There are two implementation approaches:
+
+**Cloudflare Markdown for Agents (edge-level):**
+- Available on Cloudflare Pro+ plans
+- Toggle in dashboard under AI Crawl Control
+- Automatically converts HTML to markdown when AI requests `Accept: text/markdown`
+- Returns `x-markdown-tokens` header with estimated token count
+- Returns `Content-Signal` header with AI usage permissions
+- In live mode: send `Accept: text/markdown` header and check response content-type
+- In local mode: check for Cloudflare config, `wrangler.toml`, or related settings
+
+**Self-hosted markdown versions (works with any hosting):**
+- Provide `.md` versions of key pages alongside HTML (e.g., `index.md` next to `index.html`)
+- Add `<link rel="alternate" type="text/markdown" href="/index.md">` in the HTML `<head>`
+- Configure hosting to serve `.md` files with `Content-Type: text/markdown; charset=utf-8`
+- Add `Vary: Accept` header on markdown responses
+- Implementation examples by hosting platform:
+  - **Netlify**: Use `[[headers]]` in `netlify.toml` to set Content-Type for `.md` paths
+  - **Vercel**: Use `headers` in `vercel.json`
+  - **Apache/Nginx**: Configure MIME types or per-path headers
+  - **Any static host**: Most already serve `.md` files; just add the `<link rel="alternate">` tag
+- In local mode: check for `.md` versions of pages, `<link rel="alternate" type="text/markdown"` tags, and hosting config headers
+
+**What a good implementation looks like** (from a real project):
+```html
+<!-- In the HTML <head> -->
+<link rel="alternate" type="text/markdown" href="https://example.com/index.md">
+```
+```toml
+# In netlify.toml
+[[headers]]
+  for = "/index.md"
+  [headers.values]
+    Content-Type = "text/markdown; charset=utf-8"
+    Vary = "Accept"
+```
+
+The self-hosted approach is straightforward and works everywhere. It should be the primary recommendation for sites not on Cloudflare.
 
 #### Content-Signal header
 
-- Check HTTP response headers for `Content-Signal`
+- Check HTTP response headers or hosting config for `Content-Signal`
 - Expected values: `ai-train=yes/no`, `search=yes/no`, `ai-input=yes/no`
+- From contentsignals.org, an emerging standard for expressing AI usage preferences
 - From contentsignals.org, emerging standard for AI usage preferences
 
 #### Sitemap

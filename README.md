@@ -1,8 +1,14 @@
 # GEO Readiness Audit — Claude Code & Factory Droid Skill
 
-A skill/command for [Claude Code](https://claude.ai/code) and [Factory Droid](https://factory.ai) that audits any website for **Generative Engine Optimization (GEO)** readiness — how well-positioned a site is to appear in AI-generated search results from ChatGPT, Perplexity, Claude, and Google AI Overviews.
+A skill/command for [Claude Code](https://claude.ai/code) and [Factory Droid](https://factory.ai) that audits any web project for **Generative Engine Optimization (GEO)** readiness — how well-positioned it is to appear in AI-generated search results from ChatGPT, Perplexity, Claude, and Google AI Overviews.
 
-Run `/geo https://example.com` and get a scored audit report with actionable recommendations.
+**Primary mode:** Run `/geo` in your project directory to audit your source code before you ship.
+
+**Secondary mode:** Run `/geo https://example.com` to audit a live site.
+
+## Why Local-First?
+
+The real value is catching GEO issues while you're developing, not after you've shipped. This skill analyzes your source files directly — page templates, layout components, static assets, hosting config — and tells you what's missing before it goes live. It understands Next.js, Nuxt, SvelteKit, Astro, Hugo, Jekyll, plain HTML, and other web frameworks.
 
 ## What It Checks
 
@@ -12,89 +18,76 @@ The audit evaluates six dimensions, each weighted by research evidence linking t
 |-----------|--------|-----------------|
 | **Content Structure** | 25% | Heading hierarchy, semantic HTML, alt text, meta descriptions |
 | **Content Quality** | 20% | Statistics, source citations, data tables, authorship, E-E-A-T signals |
-| **Crawler Access** | 20% | robots.txt for AI crawlers, llms.txt, markdown negotiation, sitemap, Content-Signal headers |
+| **Crawler Access** | 20% | robots.txt for AI crawlers, llms.txt, markdown for agents, sitemap, Content-Signal headers |
 | **Structured Data** | 15% | JSON-LD presence, schema types, required properties, validity |
 | **FAQ / Q&A Content** | 15% | FAQPage schema, on-page Q&A patterns, query alignment |
 | **Content Freshness** | 5% | Date metadata in JSON-LD, meta tags, HTTP headers |
 
 Plus a supplemental **OG metadata** check (not scored, but reported).
 
-The audit also auto-discovers and checks 3-5 key subpages (about, FAQ, services, contact, blog).
+### Markdown for Agents
+
+The skill checks for both approaches to making your content available to AI in markdown:
+
+- **Cloudflare Markdown for Agents** — edge-level HTML-to-markdown conversion (Pro+ plans)
+- **Self-hosted** — serving `.md` versions of key pages with `<link rel="alternate" type="text/markdown">` tags and proper `Content-Type` headers. Works with any hosting provider (Netlify, Vercel, Apache, Nginx, etc.)
 
 ## Output
 
 A structured report with:
 - Overall score (0-100) with Good / Needs Improvement / Critical rating
 - Per-dimension scores and detailed findings
-- Specific issues found with severity levels
+- Specific issues with severity levels and **file paths** (in local mode)
 - Prioritized action items ranked by effort vs. impact
-- Notes on important GEO factors outside scan scope (brand search volume, cross-platform presence, third-party mentions)
+- Notes on important GEO factors outside scan scope
 
 ## Installation
 
 ### Claude Code
 
-Copy the command and its reference files to your personal commands directory:
-
 ```bash
-# Clone the repo
 git clone https://github.com/adamprime/geo-readiness-claudecode.git
 cd geo-readiness-claudecode
 
-# Copy to your Claude Code commands directory
 cp .claude/commands/geo.md ~/.claude/commands/geo.md
 mkdir -p ~/.claude/commands/geo/references
 cp .claude/commands/geo/references/methodology.md ~/.claude/commands/geo/references/methodology.md
 ```
 
-Then restart Claude Code. The `/geo` command will be available in any project.
+Restart Claude Code. `/geo` is now available in any project.
 
 ### Factory Droid
 
-Copy the skill to your personal skills directory:
-
 ```bash
-# Clone the repo
 git clone https://github.com/adamprime/geo-readiness-claudecode.git
 cd geo-readiness-claudecode
 
-# Copy to your Factory Droid skills directory
 mkdir -p ~/.factory/skills/geo/references
 cp .factory/skills/geo/SKILL.md ~/.factory/skills/geo/SKILL.md
 cp .factory/skills/geo/references/methodology.md ~/.factory/skills/geo/references/methodology.md
 ```
 
-Then restart Droid. The `/geo` command will be available, and Droid will also auto-invoke the skill when you mention GEO readiness, AI search optimization, llms.txt, etc.
+Restart Droid. `/geo` is available in any project, and Droid will also auto-invoke the skill when you mention GEO readiness, AI search optimization, etc.
 
 ### Project-Level Installation
 
-To add the skill to a specific project (so teammates get it too), copy to the project's `.factory/skills/` or `.claude/commands/` directory instead:
-
-```bash
-# Factory Droid (project-level)
-mkdir -p .factory/skills/geo/references
-cp path/to/geo-readiness-claudecode/.factory/skills/geo/SKILL.md .factory/skills/geo/SKILL.md
-cp path/to/geo-readiness-claudecode/.factory/skills/geo/references/methodology.md .factory/skills/geo/references/methodology.md
-
-# Claude Code (project-level)
-cp path/to/geo-readiness-claudecode/.claude/commands/geo.md .claude/commands/geo.md
-mkdir -p .claude/commands/geo/references
-cp path/to/geo-readiness-claudecode/.claude/commands/geo/references/methodology.md .claude/commands/geo/references/methodology.md
-```
+To share with teammates, copy into the project's `.factory/skills/` or `.claude/commands/` directory instead of `~/`.
 
 ## Usage
 
 ```
+# Audit the project you're currently working on (primary use case)
+/geo
+
+# Audit a live site
 /geo https://example.com
 ```
 
-Or just describe what you want:
+Or describe what you want naturally:
 
 ```
-Can you audit mysite.com for AI search readiness?
+Check this project for GEO readiness before I ship
 ```
-
-(Factory Droid will auto-invoke the skill based on context.)
 
 ## Research Basis
 
@@ -107,7 +100,7 @@ The scoring methodology is grounded in published research including:
 - DiscoveredLabs (Dec 2025) — AI citation overlap analysis
 - Cloudflare Markdown for Agents (Feb 2026) — emerging content negotiation standard
 
-Full methodology with all citations is in `references/methodology.md`.
+Full methodology with all citations is in the `references/methodology.md` files.
 
 ## What is GEO?
 
